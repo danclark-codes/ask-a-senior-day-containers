@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/consult.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<style>
+code {
+	font-weight: bolder;
+	color: green;
+}
+
+.code-wrapper {
+	width: 600px !important
+}
+</style>
+
+## Managing Multi-Container Applications with Docker Compose
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Module 4 Goals
+
+- Understand why managing multiple related containers individually is hard.
+- Learn how Docker Compose simplifies multi-container application management.
+- Understand the structure and syntax of a `docker-compose.yml` file.
+- Define services, networks, and volumes using Compose.
+- Use key `docker-compose` commands to manage the application stack lifecycle.
+
+**Let's connect the pieces!**
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## The Problem: Beyond Single Containers
+
+- Real-world applications often consist of multiple services:
+    
+    - Web frontend
+    - Backend API
+    - Database
+    - Cache (e.g., Redis)
+    - Message queue
+        
+- Managing these with individual `docker run` commands gets complex:
+    
+    - Long, complex commands.
+    - Manual network configuration.
+    - Tracking dependencies between containers.
+    - Difficult to start/stop the entire application consistently.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Solution: Docker Compose 🎼
+
+
+- A tool for **defining** and **running** multi-container Docker applications.
+- Uses a YAML file (`docker-compose.yml` by default) to configure the application's services, networks, and volumes.
+- With a single command, you can create and start all the services from your configuration.
+- Simplifies development, testing, and even simple deployment scenarios.
+
+**Think: Orchestration for your local development environment (and beyond).**
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## The `docker-compose.yml` File
+
+- A YAML file defining your application stack.
+    
+- **Key Top-Level Elements:**        
+    - `services`: Defines the containers that make up your application. This is the core section. 
+    - `volumes`: Defines named volumes for data persistence.
+    - `networks`: Defines custom networks for containers to communicate.
+    
+- **Example Structure:**
+    
+    ```   
+    services:
+      # ... service definitions go here ...
+    
+    volumes:
+      # ... volume definitions go here ...
+    
+    networks:
+      # ... network definitions go here ...
+    ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Defining a Service (Part 1)
+
+- Each key under `services:` is a **service name** (e.g., `web`, `db`, `api`).
+- **Common Service Configuration Keys:**
+    - `image: <image_name>[:<tag>]`
+        - Specifies the image to start the container from (e.g., `postgres:14`).  
+    - `ports: ["<host_port>:<container_port>"]`
+        - Maps ports, similar to `docker run -p`.
+        - Example: `ports: ["8000:5000"]`
+    - `volumes: ["<volume_name>:<container_path>", "<host_path>:<container_path>"]`
+        - Mount named volumes or host paths into the container.
+        - Example (named volume): `volumes: ["db-data:/var/lib/postgresql/data"]`
+        - Example (host mount/bind mount): `volumes: ["./code:/app"]` (Great for development!)
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+##  Defining a Service (Part 2)
+
+- **More Service Configuration Keys:**
+        - `environment: ["VAR_NAME=value", "OTHER_VAR"]` or `environment: {VAR_NAME: value}`
+        - Sets environment variables inside the container.
+        - Crucial for configuration (database passwords, API keys, etc.).
+        - Example: `environment: ["POSTGRES_PASSWORD=mysecretpassword"]`
+    - `depends_on: [<service_name>, ...]`
+        - Expresses startup dependencies between services (e.g., web depends on db).
+        - _<aside class="notes"><p>_ Only waits for the container to <em>start</em>, not necessarily be ready.
+    - <strong><code>healthcheck:</code></strong>
+        - script or endpoint to query, to check service health</p>
+</div></aside></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Networking in Compose
+
+- By default, Docker Compose sets up a single **default network** for your application stack.
+- Every service defined in the `docker-compose.yml` file joins this network.
+- Containers on the same Compose network can reach each other using their **service name** as a hostname.
+    - Example: Your `web` service can connect to `db` service using hostname `db` (e.g., `postgres://user:pass@db:5432/mydatabase`).
+
+- No need to manually link containers or expose all ports to the host!
+- You can define custom networks under the top-level `networks:` key for more complex scenarios.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Persistent Data with Volumes
+
+- Containers are ephemeral; their filesystems are lost when removed.
+- Databases, user uploads, etc., need persistent storage.
+- **Named Volumes:**
+    - Managed by Docker, stored in a dedicated area on the host filesystem.
+    - Defined under the top-level `volumes:` key.
+    - Referenced by name in service definitions.
+    - **Preferred way** to handle persistent data for services like databases.
+    - **Example:**
+        
+        ```
+        services:
+          db:
+            image: postgres:14
+            volumes:
+              - db-data:/var/lib/postgresql/data # Mount named volume
+        volumes:
+          db-data: {} # Define the named volume
+        ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Key Compose Commands (Part 1)
+
+- **`docker-compose up`**
+    - Creates and starts containers defined in `docker-compose.yml`.
+    - Builds images if necessary (`build:` directive used).
+    - Attaches to logs of all services by default (like `docker logs -f`).
+    - Use `-d` to run in detached mode: `docker-compose up -d`
+        
+- **`docker-compose down`**
+    - Stops and removes containers, networks defined in the Compose file.
+    - By default, _does not_ remove named volumes.
+    - Use `docker-compose down -v` to also remove named volumes (Use with caution!).
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Key Compose Commands (Part 2)
+
+- **`docker-compose ps`**
+    - Lists the containers running as part of the application stack.
+        
+- **`docker-compose logs [service_name]`**
+    - Displays logs from services.
+    - Without a service name, shows logs from all services.
+    - Use `-f` to follow logs: `docker-compose logs -f web`
+    
+- **`docker-compose build [service_name]`**
+    - Builds (or rebuilds) images for services defined with the `build:` directive.
+
+- **`docker-compose exec <service_name> <command>`**
+    - Executes a command inside a running container (like `docker exec`).
+    - Example: `docker-compose exec web bash`
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Lab 3 : Your Turn!
+
+- **Goal:** Define and run a multi-container application using Docker Compose.
+- **Tasks:**
+	- Run the provided `docker-compose.yml` file, and have a poke around how it works.
+</div></script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"maxScale":"2","controls":true,"progress":true,"slideNumber":false,"transition":"slide","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/consult.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<style>
+code {
+	font-weight: bolder;
+	color: green;
+}
+
+.code-wrapper {
+	width: 600px !important
+}
+</style>
+# Getting Started with Docker
+### Running Containers
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Goals
+
+- Find and download container images (`docker pull`).
+- Run your first containers (`docker run`).
+- Understand different running modes (interactive vs. detached).
+- Manage container lifecycle (`ps`, `stop`, `rm`).
+- Access services running inside containers (port mapping).
+- Inspect container logs and details (`logs`, `inspect`).
+- Clean up unused resources.
+    
+
+**Let's get hands-on!**
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Where Do Images Come From?
+## Registries!
+
+- **Registry:** A repository for storing and sharing container images.
+- **Docker Hub:** The largest public registry (`hub.docker.com`). Contains official images (e.g., `python`, `nginx`, `postgres`) and community images.
+- **Private Registries:** For sensitive/proprietary images (e.g., Azure Container Registry (ACR), AWS ECR, Google AR).
+    
+
+We'll mostly use Docker Hub today.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Downloading Images: `docker pull`
+
+- Downloads an image from a registry (Docker Hub by default) to your local machine.
+    
+- **Syntax:** `docker pull <image_name>[:<tag>]`
+    
+- **Tag:** Specifies a version (e.g., `python:3.9`, `python:3.11-slim`). If omitted, defaults to `latest`.
+    
+- **Example:**
+    
+    ```
+    docker pull hello-world
+    docker pull python:3.10-slim
+    docker pull nginx:stable
+    ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Listing Local Images: `docker images`
+
+- Shows the images you have downloaded locally.
+- **Syntax:** `docker images`
+- **Output Columns:**
+    
+    - `REPOSITORY`: Image name.
+    - `TAG`: Image version tag.
+    - `IMAGE ID`: Unique identifier.
+    - `CREATED`: When the image was built.
+    - `SIZE`: Size of the image.
+        
+- **Example:**
+    
+    ```
+    docker images
+    REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
+	nginx        latest    4cad75abc83d   2 months ago   192MB    
+    ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Running Containers: `docker run`
+
+- The core command to create and start a new container from an image.
+    
+- If the image isn't local, Docker will `pull` it first.
+    
+- **Basic Syntax:** `docker run <image_name>[:<tag>] [COMMAND] [ARG...]`
+    
+- **Example (Simplest Case):**
+    
+    ```
+    # Runs the default command baked into the hello-world image
+    docker run hello-world
+    ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Running Modes: Interactive vs. Detached
+
+- **`Interactive (-it):`**
+    - Connects your terminal's input/output/error streams to the container.
+    - Useful for running shells or interactive processes.
+    - `-i` (interactive) + `-t` (pseudo-TTY).
+    - **Example:** `docker run -it python:3.13-slim bash` (Opens a bash shell inside the container)
+        
+- **`Detached (-d):`**
+    - Runs the container in the background.
+    - Prints the container ID and returns you to your host terminal.
+    - Essential for long-running services (web servers, databases).
+    - **Example:** `docker run -d nginx` (Starts Nginx in the background)
+
+```
+docker run -d -p 8080:80 --name web nginx
+```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Viewing Containers: `docker ps`
+
+- Lists **running** containers.
+- **Syntax:** `docker ps`
+- **To see ALL containers (running and stopped):**
+    
+    - `docker ps -a`
+    
+```
+CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS                  NAMES
+6d1bc565a21c   nginx     "/docker-entrypoint.…"   56 minutes ago   Up 56 minutes   0.0.0.0:8080->80/tcp   web
+```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Stopping & Removing Containers
+
+- **Stop a running container:**
+    - `docker stop <container_id_or_name>`
+    - Sends a SIGTERM signal (graceful shutdown), then SIGKILL after a timeout.
+        
+- **Remove a stopped container:**
+    
+    - `docker rm <container_id_or_name>`
+    - Removes the container's writable layer. _Data in volumes persists._
+    - Cannot remove a running container (use `docker stop` first, or `docker rm -f` to force).
+        
+- **Example:**
+    
+    ```
+    docker stop web
+    docker rm web
+    ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Accessing Services: Port Mapping (`-p`)
+
+- Connects a port on your host machine to a port inside the container.
+- Allows you to access services (like web servers) running in the container from your host browser/tools.
+- **Syntax:** `docker run -p <host_port>:<container_port> ...`
+- **Example (Run Nginx and access it on host port 8080):**
+    ```
+    # Nginx listens on port 80 inside the container by default
+    docker run -d -p 8080:80 --name web nginx
+    ```
+    
+- Now access `http://localhost:8080` in your browser.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Looking Inside: `logs` & `inspect`
+
+- **`docker logs <container_id_or_name>`**:
+    - Fetches the logs (stdout/stderr) from a container.
+    - Essential for debugging.
+    - Use `-f` to follow logs in real-time (`docker logs -f <container>`).
+- **`docker inspect <container_id_or_name>`**:
+    - Returns detailed low-level information about a container (or image) in JSON format.
+    - Useful for finding IP addresses, volume mounts, environment variables, etc.
+        
+- **Example:**
+    
+    ```
+    docker logs web
+    docker inspect web
+    ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Housekeeping: `docker system prune`
+
+- Docker resources (stopped containers, unused networks, dangling images) can accumulate over time.
+- **`docker system prune`**:
+    - Removes all stopped containers.
+    - Removes all unused networks.
+    - Removes all dangling images (images not tagged or used by containers).
+    - _Use with caution!_
+        
+- **To remove EVERYTHING:**
+    - `docker system prune --all --force` (Even more caution!)
+
+```
+docker system prune --all --force         
+Deleted Containers:
+8666e220054d2bc77ca87f51cee340d18a26f0b1de7d3c79aab4e73bb9147afd
+945ae2ed1b8186db79095586e2fee9b48224d093854bd32e01689eb07e40a7fa
+230727de25afea635ad7ec122bde31fcbe4c3fba0a77bac002ed1ffe0956ebb0
+
+Deleted Images:
+untagged: hello-world:latest
+untagged: hello-world@sha256:424f1f86cdf501deb591ace8d14d2f40272617b51b374915a87a2886b2025ece
+deleted: sha256:74cc54e27dc41bb10dc4b2226072d469509f2f22f1a3ce74f4a59661a1d44602
+deleted: sha256:63a41026379f4391a306242eb0b9f26dc3550d863b7fdbb97d899f6eb89efe72
+untagged: python:3.13-slim
+untagged: python@sha256:21e39cf1815802d4c6f89a0d3a166cc67ce58f95b6d1639e68a394c99310d2e5
+deleted: sha256:94124e1b0412d8ea681c370b2724986703ec380e867240c13247050b3ea39ca2
+deleted: sha256:f1cabc2791272c0945f8f724b8dd5b8271e613092804abf5591472de6f372fd5
+deleted: sha256:9b3f92dec804a8c3fef02189868083e458ad5d95b79ce450fc76835760044c77
+deleted: sha256:bdd0693f7c47144847d41e5c77408b76c710af80f7f334b2609d2f61d1d785fa
+
+Total reclaimed space: 45.95MB
+```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Lab1 : Your Turn!
+
+- **Goal:** Practice the commands we just learned.
+- **Tasks:**
+    1. Run `hello-world`.
+    2. Pull and run `nginx` detached, map port 8080 -> 80, access it.
+    3. Pull `python:slim`, run it interactively (`bash`), exit.
+    4. Use `docker ps -a` to see all containers.
+    5. `stop` and `rm` the containers you created.
+    6. Use `docker images` to see downloaded images.
+    7. (Optional) Try `docker system prune`.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Bonus: Vaultwarden
+
+[https://hub.docker.com/r/vaultwarden/server](https://hub.docker.com/r/vaultwarden/server)
+
+```
+cd C:\Users\Daniel.Clark\code\github.com\danclark-codes\sandbox\  
+mkdir vaultwarden-data
+docker run -d --name vaultwarden -p 81:80 -v ./vaultwarden-data/:/data/ vaultwarden/server:latest 
+```
+</div></script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"maxScale":"2","controls":true,"progress":true,"slideNumber":false,"transition":"slide","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>

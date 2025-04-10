@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/consult.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<style>
+code {
+	font-weight: bolder;
+	color: green;
+}
+
+.code-wrapper {
+	width: 600px !important
+}
+</style>
+
+# Building Custom Images with Dockerfiles
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Module 3 Goals
+
+- Understand the purpose and structure of a Dockerfile
+- Learn key Dockerfile instructions (`FROM`, `RUN`, `COPY`, `CMD`, etc.)
+- Build your own custom container images (`docker build`).
+- Understand build context and `.dockerignore`.
+- Learn about image layering and caching.
+- Apply best practices for writing Dockerfiles.
+    
+
+**Time to create your own blueprints!**
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Why Build Custom Images?
+
+- Pre-built images (`python`, `nginx`) are great starting points.
+- But they don't contain **YOUR** application code or specific dependencies.
+- We need a way to package our applications, libraries, configurations, and data into a reusable image.
+
+**`Solution: Define the build process using a Dockerfile.`**
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Slide 4: What is a Dockerfile?
+
+- A text file named `Dockerfile` (no extension).
+- Contains a series of instructions telling Docker how to build an image.
+- Each instruction creates a new **layer** in the image.
+- It's like a recipe for creating your container image.
+    
+
+**Think: Infrastructure as Code for your container images.**
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Dockerfile Instructions (Part 1)
+
+- **`FROM <image>[:<tag>]`**
+    
+    - Specifies the base image to start from.
+    - _Must_ be the first instruction.
+    - Example: `FROM python:3.10-slim`
+    
+- **`WORKDIR /path/to/workdir`**
+    
+    - Sets the working directory for subsequent instructions (`RUN`, `CMD`, `ENTRYPOINT`, `COPY`, `ADD`).
+    - If it doesn't exist, it will be created.
+    - Example: `WORKDIR /app`
+    
+- **`COPY <src>... <dest>`**
+    - Copies files or directories from your host build context **into** the image filesystem.
+    - Example: `COPY ./requirements.txt .` (copies file to WORKDIR)
+    - Example: `COPY . .` (copies everything from build context to WORKDIR)
+        
+- **`ADD <src>... <dest>`**
+    - Similar to `COPY`, but with extra features (like URL download, auto-extracting archives).
+    - **Best Practice:** Prefer `COPY` unless you specifically need `ADD`'s extra features.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Dockerfile Instructions (Part 2)
+
+- **`RUN <command>`**
+    - Executes a command in a new layer _during the image build process_.
+    - Used for installing packages, creating directories, compiling code, etc.
+    - Example: `RUN pip install --no-cache-dir -r requirements.txt`
+    - Example: `RUN apt-get update && apt-get install -y some-package`
+    
+- **`EXPOSE <port> [<port>/<protocol>...]`**
+    - Informs Docker that the container will listen on the specified network ports at runtime.
+    - Acts as documentation; _does not actually publish the port_. You still need `-p` with `docker run`.
+    - Example: `EXPOSE 5000` (for a web app running on port 5000)
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+##  Dockerfile Instructions (Part 3): `CMD` vs `ENTRYPOINT`
+
+- Defines the default command to run when a container starts.
+    
+- **`CMD ["executable","param1","param2"]`** (Exec form, preferred)
+    - Provides defaults for an executing container.
+    - These defaults can be **overridden** when starting a container (`docker run <image> <new_command>`).
+    - Only the _last_ `CMD` instruction in a Dockerfile takes effect.
+    - Example: `CMD ["python", "app.py"]`
+        
+- **`ENTRYPOINT ["executable", "param1", "param2"]`** (Exec form, preferred
+    - Configures a container that will run as an executable.
+    - Commands passed via `docker run <image> <args>` are appended as arguments to the `ENTRYPOINT`.
+    - Harder to override than `CMD`.
+    - Example: `ENTRYPOINT ["python"]` (then `docker run my-image app.py`)
+        
+- **Common Pattern:** Use `ENTRYPOINT` for the main executable and `CMD` for default arguments.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Building Images: `docker build`
+
+- Builds an image from a Dockerfile and a "context".
+- **Syntax:** `docker build [OPTIONS] PATH | URL | -`
+    - `PATH`: Typically `.` (the current directory containing the Dockerfile).
+- **`Key Option: -t <name>[:<tag>] (tag)`**
+    - Assigns a memorable name and optional tag to the image.
+    - Example: `docker build -t my-python-app:1.0 .`
+        
+- **Process:**
+    1. Docker client sends the "context" (files in `PATH`) to the Docker daemon.
+    2. Daemon executes Dockerfile instructions step-by-step, creating layers.
+    3. Outputs the final image ID and tags it if `-t` was used.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Build Context & `.dockerignore`
+
+- **Build Context:** The set of files at the specified `PATH` or `URL` sent to the Docker daemon. `COPY` and `ADD` instructions refer to files within this context.
+    - Usually `.` (current directory).
+        
+- **Problem:** Sending unnecessary files (logs, `.git`, local virtualenvs, build artifacts) makes the build slow and the image larger. Can also leak secrets!
+    
+- **`Solution: .dockerignore file`**
+    - Similar syntax to `.gitignore`.
+    - Lists files/patterns to exclude from the build context.
+    - Place it in the root of the context directory (where you run `docker build`).
+    - **`Example .dockerignore:`**
+        
+        ```
+        .git
+        .venv
+        __pycache__
+        *.pyc
+        *.log
+        ```
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Image Layers & Caching
+
+**(Diagram: Show Dockerfile instructions mapping to stacked, cached layers)**
+
+- Each instruction in the Dockerfile creates a read-only **layer** in the image.
+- Layers are stacked on top of each other.
+- **Caching:** When rebuilding, Docker reuses layers from previous builds if:
+    - The instruction itself hasn't changed.
+    - For `COPY`/`ADD`, the content of the copied files hasn't changed.
+    - The parent layer was also cached.
+- A cache miss invalidates the cache for all subsequent instructions.
+
+**Impact:** Order your Dockerfile instructions carefully! Put things that change less often (e.g., installing dependencies) _before_ things that change frequently (e.g., `COPY`ing source code).
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Dockerfile Best Practices
+
+- **Order Matters:** Place frequently changing instructions (like `COPY . .`) later in the file to leverage caching.
+- **Minimize Layers:** Combine related `RUN` commands using `&&` to reduce layers (e.g., `RUN apt-get update && apt-get install -y ... && rm -rf /var/lib/apt/lists/*`).
+- **Use Specific Base Image Tags:** Avoid `latest` (e.g., use `python:3.10.4-slim` instead of `python:latest` or `python:3.10`). Improves reproducibility.
+- **`Use .dockerignore:`** Keep build context small and clean.
+- **`` `Prefer COPY over ADD:` ``** Unless you need `ADD`'s specific features.
+- **(Advanced) Multi-Stage Builds:** Use multiple `FROM` statements to separate build-time dependencies from runtime dependencies, resulting in smaller final images. (Mention briefly).
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Lab 2: Your Turn! 👷‍♀️
+
+
+- **Goal:** Build a custom image for a simple Python application.
+- **Tasks:**
+    
+    1. Create a basic Python web app (e.g., Flask/FastAPI) or a script.
+    2. Create a `requirements.txt` file.
+    3. Write a `Dockerfile` using instructions like `FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, `CMD`.
+    4. Create a `.dockerignore` file.
+    5. Build the image using `docker build -t my-app .`
+    6. Run a container from your new image (`docker run`).
+    7. Test your application running inside the container.
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Ready to Build? 🏗
+
+**Time for Hands-on Lab 2!**
+
+- Let's apply these concepts and build our first custom image.
+- Instructions and sample code are ready.
+- Don't hesitate to ask questions!
+</div></script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"maxScale":"2","controls":true,"progress":true,"slideNumber":false,"transition":"slide","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>
